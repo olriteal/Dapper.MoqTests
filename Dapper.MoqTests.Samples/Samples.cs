@@ -61,7 +61,20 @@ order by Make, Model", It.IsAny<object>(), It.IsAny<IDbTransaction>(), true, nul
                 .Setup(f => f.OpenConnection())
                 .Returns(connection);
 
-            await repository.GetCarsAsync();
+            var expectedCars = new List<Car>
+            {
+                new Car { Registration = "ABC123", Make = "Vauxhall", Model = "Astra" },
+                new Car { Registration = "DEF456", Make = "Ford", Model = "Mondeo" }
+            };
+            connection.Setup(c => c.QueryAsync<Car>(@"select *
+from [Cars]
+order by Make, Model", null, null, null, null)).ReturnsAsync(expectedCars);
+
+            var result = await repository.GetCarsAsync();
+
+            Assert.That(result.Select(c => c.Registration), Is.EquivalentTo(new[] { "ABC123", "DEF456" }));
+            Assert.That(result.Select(c => c.Make), Is.EquivalentTo(new[] { "Vauxhall", "Ford" }));
+            Assert.That(result.Select(c => c.Model), Is.EquivalentTo(new[] { "Astra", "Mondeo" }));
 
             connection.Verify(c => c.QueryAsync<Car>(@"select *
 from [Cars]
