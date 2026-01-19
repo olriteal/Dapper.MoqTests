@@ -60,7 +60,9 @@ namespace Dapper.MoqTests
             var parametersLookup = command.GetParameterLookup(isAsync, cancellationToken);
             var parametersArray = method.GetValues(parametersLookup);
 
-            var result = method.Invoke(this, parametersArray);
+            var result = isAsync 
+                ? TaskHelper.GetResultOfTask(method.Invoke(this, parametersArray))
+                : method.Invoke(this, parametersArray);
             var reader = result as IDataReader;
             if (result == null)
             {
